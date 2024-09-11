@@ -1,0 +1,162 @@
+---
+title: "Homework 2: Simple Linear Regression"
+author: "Ruonan Zhao"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+#This code chunk is for modifying the global options and loading required R packages
+knitr::opts_chunk$set(echo = TRUE)
+library(rmarkdown)
+library(tinytex)
+library(knitr)
+library(mosaic)
+library(readr)
+```
+
+# Instructions:
+
+The purpose of this homework assignment is to practice simple linear regression and diagnostic evaluation of models. Follow the instructions carefully. You are allowed to write as much code as needed in each code chunk but make sure you complete the task as described and only print the output that is requested. After answering each question, knit your RMarkdown file to PDF.
+
+The Bike Sharing Dataset contains daily counts of rental bikes from a two-year period (2011-2012) in Washington D.C. We will be exploring relationships between features like temperature, windspeed, and bike counts. The dataset is available through [UC Irvine's Machine Learning Repository](https://archive.ics.uci.edu/dataset/275/bike+sharing+dataset). You can use the read_csv() function to import the dataset from "day.csv" provided for you.
+
+After you finish the assignment, knit the RMarkdown file to PDF and submit the PDF to Gradescope under Homework 2.
+
+# Questions
+
+### Q1 (2 Points)
+Load the **Bike Sharing Dataset** from the provided csv file using `read_csv()`. Then, use the `str()` function to preview the dataset.
+
+```{r}
+bike_sharing = read_csv("day.csv")
+
+str(bike_sharing, )
+```
+
+### Q2 (3 Points)
+Create a new data frame called **BikeData** that contains only the columns: 
+**temp** (normalized temperature), **atemp** (feels-like temperature),
+**windspeed**, and **cnt** (total bike counts).
+
+Preview the structure of the dataset using the `str()` function. For all future 
+questions, you will use the **BikeData** dataset. 
+
+```{r}
+BikeData = bike_sharing[, c("temp", "atemp","windspeed", "cnt")]
+
+str(BikeData)
+```
+
+### Q3 (4 Points)
+Create a scatterplot of **cnt** (bike counts) versus **temp** (normalized temperature). From the scatterplot, discuss whether you believe temperature is a good predictor of bike counts. Explain your reasoning in the space below in complete sentences.
+
+```{r}
+plot(cnt ~ temp, data = BikeData)
+```
+
+**Response in Complete Sentences:** : The data shows a positive correlation. Suggesting that as the temperature rises, bike rentals tend to increase. This indicates that temperature could be a good predictor of bike counts.
+
+### Q4 (3 Points)
+
+Create a new variable in **BikeData** called **feels_ratio**, which is the ratio of the actual temperature to the feels-like temperature (temp/atemp). Then, generate a scatterplot of **cnt** (bike counts) versus **feels_ratio**. Does this new variable seem to provide useful information for predicting bike counts? Is this variable a better or worse predictor of bike counts compared to **temp** in Q3? Answer in complete sentences and explain why or why not.
+
+```{r}
+feels_ratio = BikeData$temp / BikeData$atemp
+
+BikeData$feels_ratio = feels_ratio
+
+plot(cnt ~ feels_ratio, data = BikeData)
+```
+
+**Response in Complete Sentences:** *feels_ratio* does not appear to be a better predictor of bike counts compared to temperature alone. The normalized temperature show a more clearer pattern to be a more reliable predictor for the number of bike rentals.
+
+### Q5 (4 Points)
+We want to know if a linear model can be useful for understanding the relationship between the temperature and bike counts. Fit a linear regression model with **cnt** as the response variable and **temp** as the explanatory variable. Print a summary of the model using the summary() function.
+
+Next, in complete sentences, interpret the estimate of the slope to a student in the course who may have very little background in statistics. You should explain the slope in the context of the data. Think about what would be important to tell the student so that it is helpful in understanding the relationship between temperature and bike counts. You should convert the slope value to represent a change of 1 degree Celcius to improve the interpretation. Make sure you are precise in your language so you are not misleading someone to believe something that isn't guaranteed to be true.
+
+Note, since the temperature values are normalized to be from 0 to 1, one unit increase in the temperature actually corresponds to an increase of 41 degrees Celsius.
+
+```{r}
+mod1 = lm(cnt ~ temp, data = BikeData)
+
+summary(mod1)
+```
+
+**Response in Complete Sentences:** There is a strong positive relationship between temperature and bike counts, with an increase of approximately 161.71 bikes for each degree Celsius increase in temperature.
+The slope(relationship between temperature and bike counts) is highly statistically significant (p-value < 2e-16), indicating that temperature is a meaningful predictor of bike counts.
+
+### Q6 (8 Points)
+
+Now, fit a simple linear regression model with **cnt** as the response variable and **windspeed** as the explanatory variable. In your output, I don't care how much code you write, but I only want to see the following things in your output:
+
+1. Summary of the model using `summary()` function (1 point)  
+2. Scatterplot showing the raw data with a "red" regression line plotted over the points. (2 points)  
+3. Boxplot of the residuals (1 point). 
+4. Scatterplot of the residuals versus the fitted values with a "blue" horizontal line representing perfect prediction. (2 points)  
+5. Histogram of residuals to check for normality. (1 point)   
+6. Numerical prediction of the number of bikes rented for a day with **windspeed** of 20. Provide a prediction with at least three decimal places. (1 point)    
+
+Note: **windspeed** values are normalized by dividing by the maximum value, 67.
+
+```{r}
+mod2 = lm(cnt ~ windspeed, data = BikeData)
+mod2
+
+# summary of the model
+summary(mod2)
+
+# scatterplot of raw data
+plot(cnt ~ windspeed, data = BikeData)
+abline(mod2, col = 'red')
+
+# boxplot of the residuals
+resid = mod2$residuals
+boxplot(resid)
+
+#scatterplot of the residuals vs fitted values
+mod2$fitted.values
+fit = mod2$fitted.values
+
+plot(fit, resid)
+abline(h = 0, col = "blue")
+
+# histogram of residuals
+hist(resid)
+
+# numerical prediction
+
+predict(mod2, newdata=data.frame(windspeed = 20/67))
+```
+
+### Q7 (8 Points)
+Write a summary in complete sentences of the simple linear regression model in Q6 where **cnt** is the response variable and **windspeed** is the explanatory variable. In your summary, include the following:
+
+1. Interpretation of the regression coefficients, including the model formula. (3 points)
+2. Analysis of the fit of the model, including R-squared and any significant predictors. (2 points)
+3. Assessment of the residuals, including the distribution, presence of any patterns, and normality. (3 points)
+
+**Response in Complete Sentences:** 
+
+#1.Interpretation
+Formula: *cnt* = B0 + B1*windspeed*. 
+*cnt* is the response variable (bike count). 
+B0 representing the expected value of bike counts when windspeed is 0. 
+B1 is the slope (coefficient of *windspeed*), which indicates the change in bike counts for a one-unit increase in *windspeed*.
+*windspeed* is the explanatory variable.
+The coefficient for *windspeed* is negative, indicating that as *windspeed* increases, the number of bike rentals tends to decrease. The slope value suggests that for each one-unit increase *windspeed*, bike rentals decrease by a certain number of units. The intercept represents the expected number of bike rentals when the *windspeed* is zero.
+
+#2.Analysis
+The R-squared value shows how well the model explains the variance in the bike counts. A higher R-squared value indicates a better fit. The number of R-squared is 0.05564. This means that about 5.56% of the variance in bike counts is explained by the wind speed. So it explains only a small portion of the variation in the number of bike rentals.
+
+The p-value for the *windspeed* coefficient is very low, indicating that *windspeed* is statistically significant in predicting the bike counts.
+
+#3. Assessment residuals
+The boxplot shows the distribution of the residuals, with most residuals centered around zero and no extreme outliers. 
+
+There is no clear patterns on scatterplot, the residuals are scattered somewhat randomly around zero.
+
+The histogram shows that the residuals are normally distributed.
+
+Overall, the linear regression model is a reasonably good fit for the data.
