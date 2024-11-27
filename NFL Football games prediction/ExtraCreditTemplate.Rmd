@@ -1,0 +1,623 @@
+---
+title: "STOR 455: Extra Credit Assignment"
+author: "Ruonan Zhao"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(readr)
+library(corrplot)
+library(tidyverse)
+library(car)
+```
+
+# Team Information
+
+\textbf{Team Name:} [DFBB]
+
+\textbf{Team Members:}
+
+- Ruonan Zhao, PID: 730720754
+
+# Prediction
+
+\textbf{Prediction:} [combine 1 :766.3332 
+                      combine 2 :434.2756 
+                      combine 3 :781.1729]
+
+# Analysis
+
+Provide the code you wrote, show output of the data you used, and show all the methods/models you considered to get to this prediction. Make sure to include any necessary explanations are given within your code comments. Your code should be clean, well-structured, and readable with clear comments. 
+
+```{r}
+#load data
+bears <- read.csv("/Users/ruonan_zh/Documents/UNC/Class/2024Fall/STOR 455/Homework/Extra_credit/sportsref_download_2024_bear.csv")
+lions <- read.csv("/Users/ruonan_zh/Documents/UNC/Class/2024Fall/STOR 455/Homework/Extra_credit/sportsref_download_2024_lions.csv")
+giants <- read.csv("/Users/ruonan_zh/Documents/UNC/Class/2024Fall/STOR 455/Homework/Extra_credit/sportsref_download_2024_giants.csv")
+cowboys <- read.csv("/Users/ruonan_zh/Documents/UNC/Class/2024Fall/STOR 455/Homework/Extra_credit/sportsref_download_2024_cowboys.csv")
+dolphins <- read.csv("/Users/ruonan_zh/Documents/UNC/Class/2024Fall/STOR 455/Homework/Extra_credit/sportsref_download_2024_dolphins.csv")
+packers <- read.csv("/Users/ruonan_zh/Documents/UNC/Class/2024Fall/STOR 455/Homework/Extra_credit/sportsref_download_packers.csv")
+
+colnames(bears) <- c(
+  "Week", "Day","Date", "x.4", "x.5", "x.6","x.7","Opponent", "Score_Tm", "Score_Opp", "Pass_Cmp", 
+  "Pass_Att", "Pass_Yds", "Pass_TD", "Pass_Int", "Pass_Sacks", "Sack_Yds", "Pass_ya","Pass_nya",
+  "Pass_Cmp_Percentage", "Pass_Rate", "Rush_Att", "Rush_Yds", 
+  "Rush_YA", "Rush_TD", "Field_Goals_Made", "Field_Goals_Att", "Extra_Points_Made",
+  "Extra_Points_Attempted", "Punts", "Punt_Yds", "Third_Down_Conv", 
+  "Third_Down_Att", "Fourth_Down_Conv", "Fourth_Down_Att", "Time_of_Possession")
+
+colnames(lions) <- c(
+  "Week", "Day","Date", "x.4", "x.5", "x.6","x.7","Opponent", "Score_Tm", "Score_Opp", "Pass_Cmp", 
+  "Pass_Att", "Pass_Yds", "Pass_TD", "Pass_Int", "Pass_Sacks", "Sack_Yds", "Pass_ya","Pass_nya",
+  "Pass_Cmp_Percentage", "Pass_Rate", "Rush_Att", "Rush_Yds", 
+  "Rush_YA", "Rush_TD", "Field_Goals_Made", "Field_Goals_Att", "Extra_Points_Made",
+  "Extra_Points_Attempted", "Punts", "Punt_Yds", "Third_Down_Conv", 
+  "Third_Down_Att", "Fourth_Down_Conv", "Fourth_Down_Att", "Time_of_Possession")
+
+colnames(giants) <- c(
+  "Week", "Day","Date", "x.4", "x.5", "x.6","x.7","Opponent", "Score_Tm", "Score_Opp", "Pass_Cmp", 
+  "Pass_Att", "Pass_Yds", "Pass_TD", "Pass_Int", "Pass_Sacks", "Sack_Yds", "Pass_ya","Pass_nya",
+  "Pass_Cmp_Percentage", "Pass_Rate", "Rush_Att", "Rush_Yds", 
+  "Rush_YA", "Rush_TD", "Field_Goals_Made", "Field_Goals_Att", "Extra_Points_Made",
+  "Extra_Points_Attempted", "Punts", "Punt_Yds", "Third_Down_Conv", 
+  "Third_Down_Att", "Fourth_Down_Conv", "Fourth_Down_Att", "Time_of_Possession")
+
+colnames(cowboys) <- c(
+  "Week", "Day","Date", "x.4", "x.5", "x.6","x.7","Opponent", "Score_Tm", "Score_Opp", "Pass_Cmp", 
+  "Pass_Att", "Pass_Yds", "Pass_TD", "Pass_Int", "Pass_Sacks", "Sack_Yds", "Pass_ya","Pass_nya",
+  "Pass_Cmp_Percentage", "Pass_Rate", "Rush_Att", "Rush_Yds", 
+  "Rush_YA", "Rush_TD", "Field_Goals_Made", "Field_Goals_Att", "Extra_Points_Made",
+  "Extra_Points_Attempted", "Punts", "Punt_Yds", "Third_Down_Conv", 
+  "Third_Down_Att", "Fourth_Down_Conv", "Fourth_Down_Att", "Time_of_Possession")
+
+colnames(dolphins) <- c(
+  "Week", "Day","Date", "x.4", "x.5", "x.6","x.7","Opponent", "Score_Tm", "Score_Opp", "Pass_Cmp", 
+  "Pass_Att", "Pass_Yds", "Pass_TD", "Pass_Int", "Pass_Sacks", "Sack_Yds", "Pass_ya","Pass_nya",
+  "Pass_Cmp_Percentage", "Pass_Rate", "Rush_Att", "Rush_Yds", 
+  "Rush_YA", "Rush_TD", "Field_Goals_Made", "Field_Goals_Att", "Extra_Points_Made",
+  "Extra_Points_Attempted", "Punts", "Punt_Yds", "Third_Down_Conv", 
+  "Third_Down_Att", "Fourth_Down_Conv", "Fourth_Down_Att", "Time_of_Possession")
+
+colnames(packers) <- c(
+  "Week", "Day","Date", "x.4", "x.5", "x.6","x.7","Opponent", "Score_Tm", "Score_Opp", "Pass_Cmp", 
+  "Pass_Att", "Pass_Yds", "Pass_TD", "Pass_Int", "Pass_Sacks", "Sack_Yds", "Pass_ya","Pass_nya",
+  "Pass_Cmp_Percentage", "Pass_Rate", "Rush_Att", "Rush_Yds", 
+  "Rush_YA", "Rush_TD", "Field_Goals_Made", "Field_Goals_Att", "Extra_Points_Made",
+  "Extra_Points_Attempted", "Punts", "Punt_Yds", "Third_Down_Conv", 
+  "Third_Down_Att", "Fourth_Down_Conv", "Fourth_Down_Att", "Time_of_Possession")
+
+bears <- bears[-1, -c(4, 5, 6, 7)]
+lions <- lions[-1, -c(4, 5, 6, 7)]
+giants <- giants[-1, -c(4, 5, 6, 7)]
+cowboys <- cowboys[-1, -c(4, 5, 6, 7)]
+dolphins <- dolphins[-1, -c(4, 5, 6, 7)] 
+packers <- packers[-1, -c(4, 5, 6, 7)]
+
+#check na value and get structure of data
+#bears
+sum(is.na(bears))
+colSums(is.na(bears))
+
+bears <- bears %>%
+  mutate(across(5:32, as.numeric))
+
+str(bears)
+head(bears)
+
+#lions
+sum(is.na(lions))
+colSums(is.na(lions))
+
+lions <- lions %>%
+  mutate(across(5:32, as.numeric))
+head(lions)
+
+#giants
+sum(is.na(giants))
+colSums(is.na(giants))
+
+giants <- giants %>%
+  mutate(across(5:32, as.numeric))
+head(giants)
+
+#cowboys
+sum(is.na(cowboys))
+colSums(is.na(cowboys))
+
+cowboys <- cowboys %>%
+  mutate(across(5:32, as.numeric))
+head(cowboys)
+
+#dolphins
+sum(is.na(dolphins))
+colSums(is.na(dolphins))
+
+dolphins <- dolphins %>%
+  mutate(across(5:32, as.numeric))
+head(dolphins)
+
+#packers
+sum(is.na(packers))
+colSums(is.na(packers))
+
+packers <- packers %>%
+  mutate(across(5:32, as.numeric))
+head(packers)
+```
+#check outliners
+```{r}
+boxplot(bears$Rush_Yds, main = "Boxplot of Rushing Yards Team Bears")
+boxplot(bears$Pass_TD, main = "Boxplot of Passing Touchdowns Team Bears")
+```
+
+```{r}
+boxplot(lions$Rush_Yds, main = "Boxplot of Rushing Yards Team Lions")
+boxplot(lions$Pass_TD, main = "Boxplot of Passing Touchdowns Team Lions")
+```
+
+```{r}
+boxplot(giants$Rush_Yds, main = "Boxplot of Rushing Yards Team Giants")
+boxplot(giants$Pass_TD, main = "Boxplot of Passing Touchdowns Team Giants")
+```
+
+```{r}
+boxplot(cowboys$Rush_Yds, main = "Boxplot of Rushing Yards Team Cowboys")
+boxplot(cowboys$Pass_TD, main = "Boxplot of Passing Touchdowns Team Cowboys")
+```
+
+```{r}
+boxplot(dolphins$Rush_Yds, main = "Boxplot of Rushing Yards Team Dolphins")
+boxplot(dolphins$Pass_TD, main = "Boxplot of Passing Touchdowns Team Dolphins")
+```
+
+```{r}
+boxplot(packers$Rush_Yds, main = "Boxplot of Rushing Yards Team Packers")
+boxplot(packers$Pass_TD, main = "Boxplot of Passing Touchdowns Team Packers")
+```
+
+#remove outliner
+```{r}
+Q1 <- quantile(packers$Rush_Yds, 0.25, na.rm = TRUE)
+Q3 <- quantile(packers$Rush_Yds, 0.75, na.rm = TRUE)
+IQR_value <- Q3 - Q1
+
+lower_threshold <- Q1 - 1.5 * IQR_value
+upper_threshold <- Q3 + 1.5 * IQR_value
+print(paste("Lower threshold:", lower_threshold))
+print(paste("Upper threshold:", upper_threshold))
+
+packers_filtered <- packers[packers$Rush_Yds >= lower_threshold & packers$Rush_Yds <= upper_threshold, ]
+
+boxplot(packers_filtered$Rush_Yds, main = "Boxplot of Rushing Yards Team Packers (Outliers Removed)")
+```
+
+#calculate correlation features
+```{r}
+cor_bears <- cor(bears[, sapply(bears, is.numeric)], use = "pairwise.complete.obs")
+
+bears_rush <- cor_bears["Rush_Yds", ]
+bears_rush <- bears_rush[abs(bears_rush) > 0.7]
+print("Correlation with rushing yards")
+print(bears_rush)
+
+bears_td <- cor_bears["Pass_TD", ]
+bears_td <- bears_td[abs(bears_td) > 0.7]
+print("Correlation with passing touchdowns")
+print(bears_td)
+```
+
+```{r}
+cor_lions <- cor(lions[, sapply(lions, is.numeric)], use = "pairwise.complete.obs")
+
+lions_rush <- cor_lions["Rush_Yds", ]
+lions_rush <- lions_rush[abs(lions_rush) > 0.5]
+print("Correlation with rushing yards")
+print(lions_rush)
+
+lions_td <- cor_lions["Pass_TD", ]
+lions_td <- lions_td[abs(lions_td) > 0.7]
+print("Correlation with passing touchdowns")
+print(lions_td)
+```
+
+```{r}
+cor_giants <- cor(giants[, sapply(giants, is.numeric)], use = "pairwise.complete.obs")
+
+giants_rush <- cor_giants["Rush_Yds", ]
+giants_rush <- giants_rush[abs(giants_rush) > 0.7]
+print("Correlation with rushing yards")
+print(giants_rush)
+
+giants_td <- cor_giants["Pass_TD", ]
+giants_td <- giants_td[abs(giants_td) > 0.7]
+print("Correlation with passing touchdowns")
+print(giants_td)
+```
+
+```{r}
+cor_cowboys <- cor(cowboys[, sapply(cowboys, is.numeric)], use = "pairwise.complete.obs")
+
+cowboys_rush <- cor_cowboys["Rush_Yds", ]
+cowboys_rush <- cowboys_rush[abs(cowboys_rush) > 0.7]
+print("Correlation with rushing yards")
+print(cowboys_rush)
+
+cowboys_td <- cor_cowboys["Pass_TD", ]
+cowboys_td <- cowboys_td[abs(cowboys_td) > 0.7]
+print("Correlation with passing touchdowns")
+print(cowboys_td)
+```
+
+```{r}
+cor_dolphins <- cor(dolphins[, sapply(dolphins, is.numeric)], use = "pairwise.complete.obs")
+
+dolphins_rush <- cor_dolphins["Rush_Yds", ]
+dolphins_rush <- dolphins_rush[abs(dolphins_rush) > 0.7]
+print("Correlation with rushing yards")
+print(dolphins_rush)
+
+dolphins_td <- cor_dolphins["Pass_TD", ]
+dolphins_td <- dolphins_td[abs(dolphins_td) > 0.7]
+print("Correlation with passing touchdowns")
+print(dolphins_td)
+```
+
+```{r}
+cor_packers <- cor(packers[, sapply(packers, is.numeric)], use = "pairwise.complete.obs")
+
+packers_rush <- cor_packers["Rush_Yds", ]
+packers_rush <- packers_rush[abs(packers_rush) > 0.7]
+print("Correlation with rushing yards")
+print(packers_rush)
+
+packers_td <- cor_packers["Pass_TD", ]
+packers_td <- packers_td[abs(packers_td) > 0.7]
+print("Correlation with passing touchdowns")
+print(packers_td)
+```
+#AIC
+```{r}
+full_mod1 <- lm(Rush_Yds ~ Pass_Cmp + Pass_Att + Pass_Sacks + Sack_Yds + Rush_Att + Rush_YA + Rush_TD + Field_Goals_Made + Field_Goals_Att + Extra_Points_Made + Extra_Points_Attempted +
+                 Third_Down_Conv + Fourth_Down_Att + Fourth_Down_Conv, 
+                 data = bears)
+
+null_mod1 <- lm(Rush_Yds ~ 1, data = bears)
+
+
+stepwise_mod1 <- step(null_mod1, scope = list(lower = null_mod1, upper = full_mod1), 
+                       direction = "both")
+summary(stepwise_mod1)
+```
+
+```{r}
+full_mod2 <- lm(Rush_Yds ~ Rush_YA + Score_Opp + Score_Tm + Pass_Att + Pass_TD + Pass_Sacks + Sack_Yds + Extra_Points_Made + Extra_Points_Attempted + Third_Down_Att + Fourth_Down_Conv +                             Fourth_Down_Att, data = lions)
+
+null_mod2 <- lm(Rush_Yds ~ 1, data = lions)
+
+
+stepwise_mod2 <- step(null_mod2, scope = list(lower = null_mod2, upper = full_mod2), 
+                       direction = "both")
+summary(stepwise_mod2)
+```
+
+```{r}
+full_mod3 <- lm(Rush_Yds ~ Rush_YA + Score_Tm + Pass_TD + Pass_Int + Pass_Rate, data = giants)
+
+null_mod3 <- lm(Rush_Yds ~ 1, data = giants)
+
+
+stepwise_mod3 <- step(null_mod3, scope = list(lower = null_mod3, upper = full_mod3), 
+                       direction = "both")
+summary(stepwise_mod3)
+```
+
+```{r}
+full_mod4 <- lm(Rush_Yds ~ Rush_YA + Pass_TD + Pass_ya + Pass_nya + Pass_Rate, data = cowboys)
+
+null_mod4 <- lm(Rush_Yds ~ 1, data = cowboys)
+
+
+stepwise_mod4 <- step(null_mod4, scope = list(lower = null_mod4, upper = full_mod4), 
+                       direction = "both")
+summary(stepwise_mod4)
+```
+
+```{r}
+full_mod5 <- lm(Rush_Yds ~ Sack_Yds + Rush_Att + Rush_YA + Pass_TD + Pass_nya + Pass_Cmp_Percentage + Pass_Rate + Extra_Points_Made + Extra_Points_Attempted, 
+                 data = dolphins)
+
+null_mod5 <- lm(Rush_Yds ~ 1, data = dolphins)
+
+
+stepwise_mod5 <- step(null_mod5, scope = list(lower = null_mod5, upper = full_mod5), 
+                       direction = "both")
+summary(stepwise_mod5)
+```
+
+```{r}
+full_mod6 <- lm(Rush_Yds ~ Pass_Cmp + Pass_Att + Pass_Int + Pass_nya + Pass_Rate + Rush_Att + Rush_Yds + Field_Goals_Made + Field_Goals_Att + Third_Down_Conv + Third_Down_Att + Pass_TD +                             Extra_Points_Made + Extra_Points_Attempted, 
+                  data = packers)
+
+null_mod6 <- lm(Rush_Yds ~ 1, data = packers)
+
+
+stepwise_mod6 <- step(null_mod6, scope = list(lower = null_mod6, upper = full_mod6), 
+                       direction = "both")
+summary(stepwise_mod6)
+```
+
+```{r}
+bears_mod_rush <- lm(Rush_Yds ~ Rush_YA + Rush_Att + Pass_Att + Fourth_Down_Conv, bears)
+summary(bears_mod_rush)
+```
+
+```{r}
+vif(bears_mod_rush)
+```
+
+```{r}
+lions_mod_rush <- lm(Rush_Yds ~ Score_Opp + Pass_Sacks + Pass_Att + Score_Tm, lions)
+summary(lions_mod_rush)
+```
+
+```{r}
+vif(lions_mod_rush)
+```
+
+```{r}
+giants_mod_rush <- lm(Rush_Yds ~ Rush_YA + Score_Tm + Pass_Rate, giants)
+summary(giants_mod_rush)
+```
+
+```{r}
+vif(giants_mod_rush)
+```
+
+```{r}
+cowboys_mod_rush <- lm(Rush_Yds ~ Rush_YA, cowboys)
+summary(cowboys_mod_rush)
+```
+
+```{r}
+dolphins_mod_rush <- lm(Rush_Yds ~ Rush_Att + Rush_YA + Sack_Yds + Pass_Rate + Pass_nya, dolphins)
+summary(dolphins_mod_rush)
+```
+
+```{r}
+vif(dolphins_mod_rush)
+```
+
+```{r}
+packers_mod_rush <- lm(Rush_Yds ~ Rush_Att + Field_Goals_Att + Pass_Cmp + Third_Down_Conv + Field_Goals_Made, packers)
+summary(packers_mod_rush)
+```
+
+```{r}
+vif(packers_mod_rush)
+```
+
+```{r}
+avg_bears <- colMeans(bears[, c("Rush_YA", "Rush_Att", "Pass_Att", "Fourth_Down_Conv")], na.rm = TRUE)
+predict_bears <- data.frame(t(avg_bears))
+predict_bears_rush <- predict(bears_mod_rush, newdata = predict_bears)
+
+
+avg_lions <- colMeans(lions[, c("Rush_Yds", "Score_Opp", "Pass_Sacks", "Pass_Att", "Score_Tm")], na.rm = TRUE)
+predict_lions <- data.frame(t(avg_lions))
+predict_lions_rush <- predict(lions_mod_rush, newdata = predict_lions)
+
+combine1_rush <- predict_bears_rush + predict_lions_rush
+print(combine1_rush)
+```
+
+```{r}
+avg_giants <- colMeans(giants[, c("Rush_Yds", "Rush_YA", "Score_Tm", "Pass_Rate")], na.rm = TRUE)
+predict_giants <- data.frame(t(avg_giants))
+predict_giants_rush <- predict(giants_mod_rush, newdata = predict_giants)
+
+
+avg_cowboys <- colMeans(cowboys[, c("Rush_Yds", "Rush_YA")], na.rm = TRUE)
+predict_cowboys <- data.frame(t(avg_cowboys))
+predict_cowboys_rush <- predict(cowboys_mod_rush, newdata = predict_cowboys)
+
+combine2_rush <- predict_giants_rush + predict_cowboys_rush
+print(combine2_rush)
+```
+
+```{r}
+avg_dolphins <- colMeans(dolphins[, c("Rush_Yds", "Rush_YA", "Rush_Att", "Sack_Yds", "Pass_Rate", "Pass_nya")], na.rm = TRUE)
+predict_dolphins <- data.frame(t(avg_dolphins))
+predict_dolphins_rush <- predict(dolphins_mod_rush, newdata = predict_dolphins)
+
+
+avg_packers <- colMeans(packers[, c("Rush_Yds", "Rush_Att", "Field_Goals_Att", "Pass_Cmp", "Third_Down_Conv", "Field_Goals_Made")], na.rm = TRUE)
+predict_packers <- data.frame(t(avg_packers))
+predict_packers_rush <- predict(packers_mod_rush, newdata = predict_packers)
+
+combine3_rush <- predict_dolphins_rush + predict_packers_rush
+print(combine3_rush)
+```
+
+#AIC for Pass_TD
+```{r}
+
+full_mod11 <- lm(Pass_TD ~ Rush_Yds + Pass_Cmp + Pass_Att + Pass_Sacks + Sack_Yds + Rush_Att + Rush_YA + Rush_TD + Field_Goals_Made + Field_Goals_Att + Extra_Points_Made + Extra_Points_Attempted +
+                 Third_Down_Conv + Fourth_Down_Att + Fourth_Down_Conv, 
+                 data = bears)
+
+null_mod11 <- lm(Pass_TD ~ 1, data = bears)
+
+
+stepwise_mod11 <- step(null_mod11, scope = list(lower = null_mod11, upper = full_mod11), 
+                       direction = "both")
+summary(stepwise_mod11)
+```
+
+
+```{r}
+full_mod21 <- lm(Pass_TD ~ Rush_Yds + Rush_YA + Score_Opp + Score_Tm + Pass_Att + Pass_TD + Pass_Sacks + Sack_Yds + Extra_Points_Made + Extra_Points_Attempted + Third_Down_Att + Fourth_Down_Conv +                             Fourth_Down_Att, data = lions)
+
+null_mod21 <- lm(Pass_TD ~ 1, data = lions)
+
+
+stepwise_mod21 <- step(null_mod21, scope = list(lower = null_mod21, upper = full_mod21), 
+                       direction = "both")
+summary(stepwise_mod21)
+```
+
+```{r}
+full_mod31 <- lm(Pass_TD ~ Rush_Yds + Rush_YA + Score_Tm + Pass_TD + Pass_Int + Pass_Rate, data = giants)
+
+null_mod31 <- lm(Pass_TD ~ 1, data = giants)
+
+
+stepwise_mod31 <- step(null_mod31, scope = list(lower = null_mod31, upper = full_mod31), 
+                       direction = "both")
+summary(stepwise_mod31)
+```
+
+```{r}
+full_mod41 <- lm(Pass_TD ~ Rush_Yds + Rush_YA + Pass_TD + Pass_ya + Pass_nya + Pass_Rate, data = cowboys)
+
+null_mod41 <- lm(Pass_TD ~ 1, data = cowboys)
+
+
+stepwise_mod41 <- step(null_mod41, scope = list(lower = null_mod41, upper = full_mod41), 
+                       direction = "both")
+summary(stepwise_mod41)
+```
+
+```{r}
+full_mod51 <- lm(Pass_TD ~ Rush_Yds + Sack_Yds + Rush_Att + Rush_YA + Pass_TD + Pass_nya + Pass_Cmp_Percentage + Pass_Rate + Extra_Points_Made + Extra_Points_Attempted, 
+                 data = dolphins)
+
+null_mod51 <- lm(Pass_TD ~ 1, data = dolphins)
+
+
+stepwise_mod51 <- step(null_mod51, scope = list(lower = null_mod51, upper = full_mod51), 
+                       direction = "both")
+summary(stepwise_mod51)
+```
+
+```{r}
+full_mod61 <- lm(Pass_TD ~ Rush_Yds + Pass_Cmp + Pass_Att + Pass_Int + Pass_nya + Pass_Rate + Rush_Att + Rush_Yds + Field_Goals_Made + Field_Goals_Att + Third_Down_Conv + Third_Down_Att + Pass_TD +                             Extra_Points_Made + Extra_Points_Attempted, 
+                  data = packers)
+
+null_mod61 <- lm(Pass_TD ~ 1, data = packers)
+
+
+stepwise_mod61 <- step(null_mod61, scope = list(lower = null_mod61, upper = full_mod61), 
+                       direction = "both")
+summary(stepwise_mod61)
+```
+
+
+```{r}
+bears_mod_td <- lm(Pass_TD ~ Extra_Points_Made + Rush_Att + Rush_Yds + 
+    Third_Down_Conv, bears)
+summary(bears_mod_td)
+```
+
+```{r}
+vif(bears_mod_td)
+```
+
+```{r}
+lions_mod_td <- lm(Pass_TD ~ Extra_Points_Attempted + Fourth_Down_Conv + Score_Tm + 
+    Score_Opp + Sack_Yds + Fourth_Down_Att, lions)
+summary(lions_mod_td)
+```
+
+```{r}
+vif(lions_mod_td)
+```
+
+```{r}
+giants_mod_td <- lm(Pass_TD ~ Pass_Rate, giants)
+summary(giants_mod_td)
+```
+
+```{r}
+cowboys_mod_td <- lm(Pass_TD ~ Pass_Rate, cowboys)
+summary(cowboys_mod_td)
+```
+
+```{r}
+dolphins_mod_td <- lm(Pass_TD ~ Extra_Points_Made + Rush_Att + Rush_YA, dolphins)
+summary(dolphins_mod_td)
+```
+
+```{r}
+vif(dolphins_mod_td)
+```
+
+```{r}
+packers_mod_td <- lm(Pass_TD ~ Extra_Points_Made + Pass_nya + Pass_Att + Pass_Rate, packers)
+summary(packers_mod_td)
+```
+
+```{r}
+vif(packers_mod_td)
+```
+
+```{r}
+avg_bears_td <- colMeans(bears[, c("Pass_TD", "Extra_Points_Made", "Rush_Att", "Rush_Yds", "Third_Down_Conv")], na.rm = TRUE)
+predict_bears_td <- data.frame(t(avg_bears_td))
+predict_bears_td <- predict(bears_mod_td, newdata = predict_bears_td)
+
+
+avg_lions_td <- colMeans(lions[, c("Pass_TD", "Extra_Points_Attempted", "Fourth_Down_Conv", "Score_Tm", "Score_Opp", "Sack_Yds", "Fourth_Down_Att")], na.rm = TRUE)
+predict_lions_td <- data.frame(t(avg_lions_td))
+predict_lions_td <- predict(lions_mod_td, newdata = predict_lions_td)
+
+combine1_td <- predict_bears_td + predict_lions_td
+print(combine1_td)
+```
+
+```{r}
+avg_giants_td <- colMeans(giants[, c("Pass_TD", "Pass_Rate")], na.rm = TRUE)
+predict_giants_td <- data.frame(t(avg_giants_td))
+predict_giants_td <- predict(giants_mod_td, newdata = predict_giants_td)
+
+
+avg_cowboys_td <- colMeans(cowboys[, c("Pass_TD", "Pass_Rate")], na.rm = TRUE)
+predict_cowboys_td <- data.frame(t(avg_cowboys_td))
+predict_cowboys_td <- predict(cowboys_mod_td, newdata = predict_cowboys_td)
+
+combine2_td <- predict_giants_td + predict_cowboys_td
+print(combine2_td)
+```
+
+```{r}
+avg_dolphins_td <- colMeans(dolphins[, c("Pass_TD", "Extra_Points_Made", "Rush_Att", "Rush_YA")], na.rm = TRUE)
+predict_dolphins_td <- data.frame(t(avg_dolphins_td))
+predict_dolphins_rush_td <- predict(dolphins_mod_td, newdata = predict_dolphins_td)
+
+
+avg_packers_td <- colMeans(packers[, c("Pass_TD", "Extra_Points_Made", "Pass_nya", "Pass_Att", "Pass_Rate")], na.rm = TRUE)
+predict_packers_td <- data.frame(t(avg_packers_td))
+predict_packers_td <- predict(packers_mod_td, newdata = predict_packers_td)
+
+combine3_td <- predict_dolphins_td + predict_packers_td
+print(combine3_td)
+```
+
+```{r}
+combine1 <- 255.4444 * combine1_td
+combine2 <- combine2_rush * combine2_td
+combine3 <- combine3_rush * 2.777778
+cat(combine1, combine2, combine3)
+```
+
+# Summary of Work
+Summarize (in 1 paragraph) the work you did that led to the exact prediction you made. In this paragraph, discuss why you think your actual prediction is the “best” or “most accurate.”
+
+I first downloaded the historical data for all games of six teams this year from the Pro Football website because I couldn't find a dataset that included touchdown data in previous years' historical data, so I chose to use only the 2024 data for prediction. First, I downloaded the CSV format and imported it into R, then cleaned and checked the data to make it more suitable for use. After that, I wanted to check if there were any outliers in the data, so I used a boxplot to observe, and removed the identified outliers. Next, I used the cor() function to extract the most influential features, and then tried to build a linear regression model to predict the outcome. However, I found that all p-values were greater than 0.05, so I decided to use AIC to improve feature selection. In the end, I chose the AIC model that did not contain '-inf' values and built a linear regression model, and then took the average to predict the product of total rushing yards and total passing touchdowns. I believe this prediction is relatively accurate because my R-square is generally above 80%.
+
+# Sources
+Cite all sources used. This includes your data and anything used for inspiration or learning new techniques. Your sources can be cited in any format you'd like as long as it's a professional format  (i.e. MLA, APA, etc.). 
+data source:
+Pro Football Reference. (n.d.). Pro Football Reference. Retrieved from https://www.pro-football-reference.com
